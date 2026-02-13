@@ -1,0 +1,167 @@
+:root{
+  --bg: #0c0d10;
+  --ink: rgba(15,16,20,.92);
+  --muted: rgba(15,16,20,.62);
+  --shadow: 0 18px 60px rgba(0,0,0,.45);
+  --stroke: rgba(15,16,20,.12);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background:
+    radial-gradient(900px 500px at 20% 5%, rgba(255,107,129,.18), transparent 65%),
+    radial-gradient(900px 500px at 85% 15%, rgba(122,167,255,.15), transparent 60%),
+    radial-gradient(900px 500px at 50% 95%, rgba(140,255,200,.10), transparent 60%),
+    var(--bg);
+  color: rgba(255,255,255,.92);
+}
+
+.topbar{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:18px 18px 10px;
+  max-width:1200px; margin:0 auto;
+}
+.brand{display:flex; gap:12px; align-items:center}
+.logo{
+  width:40px; height:40px; border-radius:12px;
+  display:grid; place-items:center;
+  background: rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow: var(--shadow);
+}
+.title{font-weight:800; letter-spacing:-.02em}
+.sub{opacity:.7; font-size:12px}
+
+.actions{display:flex; gap:10px}
+.btn{
+  cursor:pointer;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.92);
+  padding:10px 12px;
+  font-weight:700; font-size:13px;
+}
+.btn:hover{border-color: rgba(255,255,255,.32); transform: translateY(-1px)}
+
+.board{
+  max-width:1200px;
+  margin:0 auto;
+  padding:10px 18px 60px;
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap:14px;
+}
+
+.note{
+  color: var(--ink);
+  border-radius:18px;
+  box-shadow: var(--shadow);
+  border:1px solid var(--stroke);
+  padding:14px 14px 12px;
+  transform: rotate(var(--rot, 0deg));
+}
+.note:nth-child(1){grid-column: span 12; --rot:-0.4deg;}
+.note:nth-child(2){grid-column: span 6; --rot:0.6deg;}
+.note:nth-child(3){grid-column: span 6; --rot:-0.3deg;}
+.note:nth-child(4){grid-column: span 6; --rot:0.2deg;}
+.note:nth-child(5){grid-column: span 6; --rot:-0.5deg;}
+.note:nth-child(6){grid-column: span 12; --rot:0.1deg;}
+
+@media (max-width: 980px){
+  .note{grid-column: span 12 !important; transform:none;}
+}
+
+.note-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px}
+.note h2{
+  margin:0;
+  font-family: "Permanent Marker", system-ui;
+  font-weight:400;
+  font-size:24px;
+  letter-spacing:.2px;
+}
+.tag{
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:999px;
+  background: rgba(15,16,20,.08);
+  border:1px solid rgba(15,16,20,.10);
+  color: rgba(15,16,20,.70);
+}
+
+.note-yellow{background: #ffeaa7;}
+.note-pink{background: #ffd6e0;}
+.note-blue{background: #cfe3ff;}
+.note-green{background: #d8f8d8;}
+.note-purple{background: #e3d7ff;}
+.note-white{background: #ffffff;}
+
+.muted{color: var(--muted);}
+.fineprint{margin-top:10px; font-size:12px; color: rgba(15,16,20,.55);}
+
+.cols{display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:10px}
+@media (max-width: 980px){ .cols{grid-template-columns:1fr;} }
+
+.weatherCard{
+  background: rgba(255,255,255,.45);
+  border:1px solid rgba(15,16,20,.10);
+  border-radius:16px;
+  padding:12px;
+}
+.miniHead{display:flex; gap:10px; align-items:baseline}
+.miniHead b{font-size:14px}
+.wx{margin-top:8px}
+.wx .line{display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px dashed rgba(15,16,20,.18)}
+.wx .line:last-child{border-bottom:none}
+
+.row{display:flex; gap:10px; margin-top:10px}
+.input{
+  flex:1;
+  border-radius:12px;
+  border:1px solid rgba(15,16,20,.14);
+  background: rgba(255,255,255,.55);
+  padding:10px 12px;
+  outline:none;
+}
+.embedBox{
+  margin-top:10px;
+  border-radius:16px;
+  border:1px solid rgba(15,16,20,.12);
+  background: rgba(255,255,255,.45);
+  padding:10px;
+}
+
+.gallery{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:10px;
+}
+@media (max-width: 980px){ .gallery{grid-template-columns:1fr 1fr;} }
+.gallery .imgWrap{
+  position:relative;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid rgba(15,16,20,.12);
+  background: rgba(255,255,255,.4);
+}
+.gallery img{width:100%; height:170px; object-fit:cover; display:block}
+.gallery button{
+  position:absolute; top:8px; right:8px;
+  border:none; cursor:pointer;
+  border-radius:10px;
+  padding:6px 8px;
+  background: rgba(0,0,0,.55);
+  color:#fff;
+}
+
+.newsList{
+  margin:10px 0 0;
+  padding-left:18px;
+}
+.newsList li{margin:8px 0; line-height:1.3}
+.newsList a{color: rgba(15,16,20,.92); text-decoration: underline dotted rgba(15,16,20,.35)}
+.newsList a:hover{color: rgba(15,16,20,1); text-decoration: underline}
