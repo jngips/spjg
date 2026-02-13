@@ -1,44 +1,66 @@
 export default async (req) => {
-  try{
+  try {
     const url = new URL(req.url);
     const lat = url.searchParams.get("lat");
     const lon = url.searchParams.get("lon");
-    if(!lat || !lon){
-      return new Response(JSON.stringify({error:"Missing lat/lon"}), { status: 400 });
+    if (!lat || !lon) {
+      return new Response(JSON.stringify({ error: "Missing lat/lon" }), { status: 400 });
     }
 
-    // Step 1: points endpoint
-    const pointsUrl = `https://api.weather.gov/points/${lat},${lon}`;
-
-    const commonHeaders = {
-      // NWS asks for a descriptive User-Agent in general documentation :contentReference[oaicite:6]{index=6}
-      // Putting it here (server-side) avoids browser preflight/header problems :contentReference[oaicite:7]{index=7}
-      "User-Agent": "our-board/1.0 (contact: you@example.com)",
+    const headers = {
+      "User-Agent": "coast-to-coast/1.0 (contact: YOUR_EMAIL@example.com)",
       "Accept": "application/geo+json, application/json"
     };
 
-    const p = await fetch(pointsUrl, { headers: commonHeaders });
-    if(!p.ok) return new Response(JSON.stringify({error:"points failed", status:p.status}), { status: 502 });
+    // 1) points endpoint -> discover forecast URLs
+    const pointsUrl = `https://api.weather.gov/points/${lat},${lon}`;
+    const p = await fetch(pointsUrl, { headers });
+    if (!p.ok) {
+      return new Response(JSON.stringify({ error: "points failed", status: p.status }), { status: 502 });
+    }
 
     const pj = await p.json();
-    const forecastUrl = pj?.properties?.forecast;
-    if(!forecastUrl) return new Response(JSON.stringify({error:"No forecast URL"}), { status: 502 });
+    const props = pj?.properties || {};
+    const forecastUrl = props.forecast;
+    const hourlyUrl = props.forecastHourly;
 
-    // Step 2: forecast endpoint
-    const f = await fetch(forecastUrl, { headers: commonHeaders });
-    if(!f.ok) return new Response(JSON.stringify({error:"forecast failed", status:f.status}), { status: 502 });
+    if (!forecastUrl || !hourlyUrl) {
+      return new Response(JSON.stringify({ error: "Missing forecast urls" }), { status: 502 });
+    }
 
-    const fj = await f.json();
-    const periods = fj?.properties?.periods ?? [];
+    // 2) daily + hourly fetch
+    const [fd, fh] = await Promise.all([
+      fetch(forecastUrl, { headers }),
+      fetch(hourlyUrl, { headers })
+    ]);
 
-    return new Response(JSON.stringify({ periods }), {
+    if (!fd.ok) {
+      return new Response(JSON.stringify({ error: "forecast failed", status: fd.status }), { status: 502 });
+    }
+    if (!fh.ok) {
+      return new Response(JSON.stringify({ error: "hourly failed", status: fh.status }), { status: 502 });
+    }
+
+    const dj = await fd.json();
+    const hj = await fh.json();
+
+    const dailyPeriods = dj?.properties?.periods ?? [];
+    const hourlyPeriods = hj?.properties?.periods ?? [];
+    const updated = dj?.properties?.updated ?? hj?.properties?.updated ?? null;
+
+    return new Response(JSON.stringify({
+      updated,
+      dailyPeriods,
+      hourlyPeriods
+    }), {
       status: 200,
       headers: {
-        "Content-Type":"application/json",
-        "Cache-Control":"public, max-age=300"
+        "Content-Type": "application/json",
+        // 5-min caching (good practice). Refresh will still feel "live".
+        "Cache-Control": "public, max-age=300"
       }
     });
-  }catch(e){
-    return new Response(JSON.stringify({error:String(e)}), { status: 500 });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
   }
 };

@@ -3,20 +3,24 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Two Cities</title>
+  <title>Coast to Coast</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="assets/style.css"/>
 </head>
 
-<body>
-  <div class="bg"></div>
+<body class="wx-clear">
+  <!-- weather FX overlays -->
+  <div id="fxRain" class="fx rain"></div>
+  <div id="fxSnow" class="fx snow"></div>
 
   <header class="top">
     <div class="brand">
       <div class="brandTitle">Coast to Coast</div>
-      <div class="brandSub" id="clockLine">Loading time…</div>
+      <div class="brandSub" id="clockLine">LA --:-- • NY --:--</div>
     </div>
 
     <div class="seg" role="tablist" aria-label="City selector">
@@ -31,19 +35,21 @@
       <div class="heroTop">
         <div>
           <div class="cityName" id="cityName">New York</div>
-          <div class="cond" id="condLine">—</div>
+          <div class="cond" id="condLine">Loading…</div>
         </div>
         <div class="temp" id="tempBig">--°</div>
       </div>
 
       <div class="heroMeta">
-        <div class="metaItem"><span>Feels</span><b id="feels">--°</b></div>
-        <div class="metaItem"><span>Precip</span><b id="precip">--%</b></div>
-        <div class="metaItem"><span>Sky</span><b id="sky">--%</b></div>
-        <div class="metaItem"><span>Wind</span><b id="wind">--</b></div>
-        <div class="metaItem"><span>Humidity</span><b id="rh">--%</b></div>
-        <div class="metaItem"><span>Sunset</span><b id="sunset">--:--</b></div>
+        <div class="metaItem"><span>Feels</span><b id="feels">—</b></div>
+        <div class="metaItem"><span>Precip</span><b id="precip">—</b></div>
+        <div class="metaItem"><span>Sky</span><b id="sky">—</b></div>
+        <div class="metaItem"><span>Wind</span><b id="wind">—</b></div>
+        <div class="metaItem"><span>Humidity</span><b id="rh">—</b></div>
+        <div class="metaItem"><span>Sunset</span><b id="sunset">—</b></div>
       </div>
+
+      <div class="updated" id="updatedLine">Updated: —</div>
     </section>
 
     <!-- COMPARISON -->
@@ -60,13 +66,11 @@
     <!-- FORECAST STRIP -->
     <section class="forecast">
       <div class="secTitle">Forecast</div>
-      <div class="strip" id="forecastStrip">
-        <!-- cards injected -->
-      </div>
+      <div class="strip" id="forecastStrip"></div>
     </section>
 
     <footer class="foot">
-      Built for her • Powered by NWS
+      Built private • Styled like an app • Powered by NWS
     </footer>
   </main>
 
