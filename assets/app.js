@@ -1,136 +1,179 @@
-const LA = { name: "LA 90404", lat: 34.02665, lon: -118.47381 }; // ZIP-center approx
-const NY = { name: "NY 10009", lat: 40.725, lon: -73.985 };
+const HER = { key:"HER", label:"New York", zip:"10009", lat:40.725, lon:-73.985 };
+const ME  = { key:"ME",  label:"Los Angeles", zip:"90404", lat:34.02665, lon:-118.47381 };
 
-const LS_PHOTOS = "board_photos_v1";
-const LS_SPOTIFY = "board_spotify_v1";
+let current = HER;
+let cache = { HER:null, ME:null };
 
-function el(id){ return document.getElementById(id); }
+const $ = (id) => document.getElementById(id);
 
-function wxHtml(periods, n=4){
-  const top = periods.slice(0,n);
-  return top.map(p => `
-    <div class="line">
-      <div><b>${p.name}</b><div class="muted">${p.shortForecast ?? ""}</div></div>
-      <div style="text-align:right">
-        <div><b>${p.temperature}°${p.temperatureUnit}</b></div>
-        <div class="muted">${p.windSpeed ?? ""} ${p.windDirection ?? ""}</div>
-      </div>
+function nowClockLine(){
+  const la = new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit", timeZone:"America/Los_Angeles"});
+  const ny = new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit", timeZone:"America/New_York"});
+  $("clockLine").textContent = `LA ${la} • NY ${ny}`;
+}
+setInterval(nowClockLine, 30_000);
+nowClockLine();
+
+function minutesBetween(a, b){
+  return Math.round((b - a) / 60000);
+}
+
+function formatHM(d, tz){
+  return d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit", timeZone: tz});
+}
+
+function dayLabelFromName(name){
+  // NWS "Tonight", "Monday", etc. We'll keep it as-is but shorten if needed.
+  return name.length > 10 ? name.slice(0,10) + "…" : name;
+}
+
+async function fetchForecast(city){
+  const r = await fetch(`/.netlify/functions/weather?lat=${city.lat}&lon=${city.lon}`);
+  if(!r.ok) throw new Error(`Weather failed ${r.status}`);
+  return await r.json(); // { periods: [...] }
+}
+
+function pickCurrent(periods){
+  // Use the first period as "current-ish"
+  return periods[0] || null;
+}
+
+function estimateSkyCover(shortForecast){
+  // NWS doesn't always provide numeric sky cover in forecast periods.
+  // We'll estimate from text (simple heuristic) so UI can show something.
+  const t = (shortForecast || "").toLowerCase();
+  if(t.includes("clear")) return 10;
+  if(t.includes("mostly sunny")) return 25;
+  if(t.includes("partly")) return 45;
+  if(t.includes("mostly cloudy")) return 75;
+  if(t.includes("cloudy") || t.includes("overcast")) return 90;
+  return null;
+}
+
+function estimatePrecipChance(detailedForecast){
+  // NWS gives POP in some products but not always in /forecast periods.
+  // We'll show "—" unless we can infer something.
+  const t = (detailedForecast || "").toLowerCase();
+  if(t.includes("chance of")) return 40;
+  if(t.includes("likely")) return 60;
+  if(t.includes("rain") || t.includes("showers") || t.includes("thunder")) return 55;
+  if(t.includes("snow")) return 55;
+  return null;
+}
+
+function renderHero(city, data){
+  const periods = data.periods || [];
+  const cur = pickCurrent(periods);
+  if(!cur){
+    $("condLine").textContent = "No data";
+    return;
+  }
+
+  $("cityName").textContent = `${city.label}`;
+  $("tempBig").textContent = `${cur.temperature}°${cur.temperatureUnit}`;
+  $("condLine").textContent = cur.shortForecast || "—";
+
+  // “Feels like” isn’t directly in NWS /forecast periods.
+  // We'll show same as temp for now (or you can compute via heat index/wind chill later).
+  $("feels").textContent = `${cur.temperature}°`;
+
+  const pop = estimatePrecipChance(cur.detailedForecast);
+  $("precip").textContent = pop == null ? "—" : `${pop}%`;
+
+  const sky = estimateSkyCover(cur.shortForecast);
+  $("sky").textContent = sky == null ? "—" : `${sky}%`;
+
+  const wind = [cur.windSpeed, cur.windDirection].filter(Boolean).join(" ");
+  $("wind").textContent = wind || "—";
+
+  // RH not included in this endpoint; keep placeholder.
+  $("rh").textContent = "—";
+
+  // Sunset: requires astronomy calc OR separate API.
+  // For now we leave it placeholder, but we can add sunrise-sunset.org or an NOAA calc later.
+  $("sunset").textContent = "—";
+}
+
+function renderForecastStrip(data){
+  const periods = (data.periods || []).slice(0, 8);
+  $("forecastStrip").innerHTML = periods.map(p => `
+    <div class="fc">
+      <div class="day">${dayLabelFromName(p.name)}</div>
+      <div class="small">${p.shortForecast || ""}</div>
+      <div class="t">${p.temperature}°</div>
+      <div class="small">${p.windSpeed || ""}</div>
     </div>
   `).join("");
 }
 
-async function loadWeather(targetEl, loc){
-  targetEl.textContent = "Loading…";
-  const r = await fetch(`/.netlify/functions/weather?lat=${loc.lat}&lon=${loc.lon}`);
-  if(!r.ok) throw new Error(`Weather failed: ${r.status}`);
-  const data = await r.json();
-  targetEl.innerHTML = wxHtml(data.periods, 4);
-}
+function renderComparison(){
+  const a = cache.HER?.periods?.[0];
+  const b = cache.ME?.periods?.[0];
 
-function parseSpotifyEmbed(url){
-  // Accept track/playlist/album share links; convert to embed.
-  // Examples:
-  // https://open.spotify.com/track/<id> -> https://open.spotify.com/embed/track/<id>
-  try{
-    const u = new URL(url);
-    if(!u.hostname.includes("spotify.com")) return null;
-    const parts = u.pathname.split("/").filter(Boolean);
-    if(parts.length < 2) return null;
-    const type = parts[0], id = parts[1];
-    return `https://open.spotify.com/embed/${type}/${id}`;
-  }catch{ return null; }
-}
-
-function renderSpotify(){
-  const url = localStorage.getItem(LS_SPOTIFY) || "";
-  const box = el("spotifyEmbed");
-  if(!url){
-    box.classList.add("muted");
-    box.textContent = "Add a link to show the player.";
+  if(!a || !b){
+    $("dTemp").textContent = "Δ Temp: —";
+    $("dSunset").textContent = "Δ Sunset: —";
+    $("dPrecip").textContent = "Δ Precip: —";
+    $("mood").textContent = "—";
     return;
   }
-  const embed = parseSpotifyEmbed(url);
-  if(!embed){
-    box.textContent = "That doesn’t look like a Spotify link.";
-    return;
+
+  const dT = a.temperature - b.temperature; // HER - ME
+  const colder = dT < 0 ? "warmer" : "colder";
+  $("dTemp").textContent = `Δ Temp: ${Math.abs(dT)}° (${cache.HERCityLabel ?? "NY"} is ${colder})`;
+
+  // Precip heuristic
+  const popA = estimatePrecipChance(a.detailedForecast) ?? 0;
+  const popB = estimatePrecipChance(b.detailedForecast) ?? 0;
+  $("dPrecip").textContent = `Δ Precip: ${Math.abs(popA - popB)}%`;
+
+  // Sunset placeholder until we add proper calc
+  $("dSunset").textContent = "Δ Sunset: —";
+
+  // Mood line
+  const ra = (a.shortForecast||"").toLowerCase();
+  const rb = (b.shortForecast||"").toLowerCase();
+  const rainyA = ra.includes("rain") || ra.includes("showers") || ra.includes("thunder");
+  const rainyB = rb.includes("rain") || rb.includes("showers") || rb.includes("thunder");
+  const clearA = ra.includes("clear");
+  const clearB = rb.includes("clear");
+
+  let mood = "Two different skies.";
+  if(rainyA && rainyB) mood = "Shared rain.";
+  else if(clearA && clearB) mood = "Clear in both cities.";
+  else if(rainyA && !rainyB) mood = "Rain there, clearer here.";
+  else if(!rainyA && rainyB) mood = "Clearer there, rain here.";
+
+  $("mood").textContent = mood;
+}
+
+async function loadCity(city){
+  const data = await fetchForecast(city);
+  cache[city.key] = data;
+  if(current.key === city.key){
+    renderHero(city, data);
+    renderForecastStrip(data);
   }
-  box.innerHTML = `<iframe style="width:100%;height:152px;border:0;border-radius:12px"
-    allow="encrypted-media" src="${embed}"></iframe>`;
+  renderComparison();
 }
 
-function loadPhotos(){
-  return JSON.parse(localStorage.getItem(LS_PHOTOS) || "[]");
-}
-function savePhotos(arr){
-  localStorage.setItem(LS_PHOTOS, JSON.stringify(arr));
-}
-function renderGallery(){
-  const g = el("gallery");
-  const photos = loadPhotos();
-  g.innerHTML = photos.map((src, i) => `
-    <div class="imgWrap">
-      <img src="${src}" alt="photo ${i+1}" loading="lazy"/>
-      <button data-del="${i}" title="Remove">✕</button>
-    </div>
-  `).join("") || `<div class="muted">Add image URLs to build a little gallery.</div>`;
-
-  g.querySelectorAll("button[data-del]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const idx = Number(btn.dataset.del);
-      const next = loadPhotos().filter((_, j) => j !== idx);
-      savePhotos(next);
-      renderGallery();
-    });
+function setCity(key){
+  current = (key === "ME") ? ME : HER;
+  document.querySelectorAll(".segBtn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.city === current.key);
   });
-}
-
-async function loadRssInto(listEl, feedUrl, limit=5){
-  const r = await fetch(`/.netlify/functions/rss?url=${encodeURIComponent(feedUrl)}&limit=${limit}`);
-  if(!r.ok) throw new Error(`RSS failed: ${r.status}`);
-  const data = await r.json();
-  listEl.innerHTML = data.items.map(it =>
-    `<li><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a></li>`
-  ).join("");
-}
-
-async function refreshAll(){
-  try{
-    await Promise.all([
-      loadWeather(el("wxLA"), LA),
-      loadWeather(el("wxNY"), NY),
-      // Fashion: WWD RSS landing page exists; pick one RSS URL you like (replace if you prefer FashionNetwork etc.)
-      // WWD provides RSS feed options: https://wwd.com/rss-feeds/ :contentReference[oaicite:3]{index=3}
-      loadRssInto(el("newsFashion"), "https://wwd.com/feed/"),
-      // Tech + Climate: NOAA Climate.gov feeds + NASA Earth Observatory feeds exist :contentReference[oaicite:4]{index=4}
-      loadRssInto(el("newsTechClimate"), "https://www.climate.gov/feeds/news-features"),
-    ]);
-  }catch(e){
-    console.error(e);
+  const data = cache[current.key];
+  if(data){
+    renderHero(current, data);
+    renderForecastStrip(data);
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  el("refreshAll").addEventListener("click", refreshAll);
-
-  el("addPhoto").addEventListener("click", () => {
-    const v = el("photoUrl").value.trim();
-    if(!v) return;
-    const photos = loadPhotos();
-    photos.unshift(v);
-    savePhotos(photos.slice(0, 24)); // cap
-    el("photoUrl").value = "";
-    renderGallery();
-  });
-
-  el("setSpotify").addEventListener("click", () => {
-    const v = el("spotifyUrl").value.trim();
-    if(!v) return;
-    localStorage.setItem(LS_SPOTIFY, v);
-    el("spotifyUrl").value = "";
-    renderSpotify();
-  });
-
-  renderGallery();
-  renderSpotify();
-  refreshAll();
+// Wire buttons
+document.querySelectorAll(".segBtn").forEach(btn=>{
+  btn.addEventListener("click", ()=> setCity(btn.dataset.city));
 });
+
+// Boot: default HER
+setCity("HER");
+Promise.all([loadCity(HER), loadCity(ME)]).catch(console.error);

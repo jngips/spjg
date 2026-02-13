@@ -3,109 +3,71 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Board</title>
+  <title>Two Cities</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css"/>
 </head>
+
 <body>
-  <header class="topbar">
+  <div class="bg"></div>
+
+  <header class="top">
     <div class="brand">
-      <div class="logo">♥♥♥</div>
-      <div>
-        <div class="title">Sofia and Jen</div>
-        <div class="sub">•coast to coast•</div>
-      </div>
+      <div class="brandTitle">Two Cities</div>
+      <div class="brandSub" id="clockLine">Loading time…</div>
     </div>
 
-    <!-- <div class="actions">
-      <button id="refreshAll" class="btn">Refresh</button>
-    </div> -->
-    
+    <div class="seg" role="tablist" aria-label="City selector">
+      <button class="segBtn active" data-city="HER">New York</button>
+      <button class="segBtn" data-city="ME">Los Angeles</button>
+    </div>
   </header>
 
-  <main class="board">
-    <!-- WEATHER -->
-    <section class="note note-yellow">
-      <div class="note-head">
-        <h2>Weather</h2>
-        <span class="tag">NWS</span>
-      </div>
-
-      <div class="cols">
-        <div class="weatherCard">
-          <div class="miniHead">
-            <b>Los Angeles</b><span class="muted">90404</span>
-          </div>
-          <div id="wxLA" class="wx">Loading…</div>
+  <main class="wrap">
+    <!-- HERO -->
+    <section class="hero" id="hero">
+      <div class="heroTop">
+        <div>
+          <div class="cityName" id="cityName">New York</div>
+          <div class="cond" id="condLine">—</div>
         </div>
-
-        <div class="weatherCard">
-          <div class="miniHead">
-            <b>New York</b><span class="muted">10009</span>
-          </div>
-          <div id="wxNY" class="wx">Loading…</div>
-        </div>
+        <div class="temp" id="tempBig">--°</div>
       </div>
-      <div class="fineprint">Pulled from api.weather.gov via a Netlify Function proxy.</div>
+
+      <div class="heroMeta">
+        <div class="metaItem"><span>Feels</span><b id="feels">--°</b></div>
+        <div class="metaItem"><span>Precip</span><b id="precip">--%</b></div>
+        <div class="metaItem"><span>Sky</span><b id="sky">--%</b></div>
+        <div class="metaItem"><span>Wind</span><b id="wind">--</b></div>
+        <div class="metaItem"><span>Humidity</span><b id="rh">--%</b></div>
+        <div class="metaItem"><span>Sunset</span><b id="sunset">--:--</b></div>
+      </div>
     </section>
 
-    <!-- PHOTOS -->
-    <section class="note note-pink">
-      <div class="note-head">
-        <h2>Photos</h2>
-        <span class="tag">URLs</span>
+    <!-- COMPARISON -->
+    <section class="compare">
+      <div class="compareTitle">Right now</div>
+      <div class="compareGrid">
+        <div class="chip" id="dTemp">Δ Temp: —</div>
+        <div class="chip" id="dSunset">Δ Sunset: —</div>
+        <div class="chip" id="dPrecip">Δ Precip: —</div>
+        <div class="chip" id="mood">—</div>
       </div>
-      <div class="row">
-        <input id="photoUrl" class="input" placeholder="Paste an image URL (jpg/png/webp)"/>
-        <button id="addPhoto" class="btn">Add</button>
-      </div>
-      <div id="gallery" class="gallery"></div>
-      <div class="fineprint">Tip: if you want true uploads (not just URLs), we can add Cloudinary later.</div>
     </section>
 
-    <!-- SPOTIFY -->
-    <section class="note note-blue">
-      <div class="note-head">
-        <h2>Spotify</h2>
-        <span class="tag">embed</span>
+    <!-- FORECAST STRIP -->
+    <section class="forecast">
+      <div class="secTitle">Forecast</div>
+      <div class="strip" id="forecastStrip">
+        <!-- cards injected -->
       </div>
-      <div class="row">
-        <input id="spotifyUrl" class="input" placeholder="Paste Spotify track/playlist link"/>
-        <button id="setSpotify" class="btn">Set</button>
-      </div>
-      <div id="spotifyEmbed" class="embedBox muted">Add a link to show the player.</div>
     </section>
 
-    <!-- FASHION NEWS -->
-    <section class="note note-green">
-      <div class="note-head">
-        <h2>Fashion Industry</h2>
-        <span class="tag">headlines</span>
-      </div>
-      <ul id="newsFashion" class="newsList"><li class="muted">Loading…</li></ul>
-      <div class="fineprint">RSS via serverless proxy (avoids CORS).</div>
-    </section>
-
-    <!-- TECH / CLIMATE -->
-    <section class="note note-purple">
-      <div class="note-head">
-        <h2>Tech + Climate</h2>
-        <span class="tag">headlines</span>
-      </div>
-      <ul id="newsTechClimate" class="newsList"><li class="muted">Loading…</li></ul>
-      <div class="fineprint">NOAA Climate.gov + NASA Earth Observatory feeds.</div>
-    </section>
-
-    <!-- YOUR NEXT SECTION (placeholder) -->
-    <section class="note note-white">
-      <div class="note-head">
-        <h2>Next Tile</h2>
-        <span class="tag">you decide</span>
-      </div>
-      <div class="muted">Tell me what you want here (map pins, countdown, “date ideas”, etc.).</div>
-    </section>
+    <footer class="foot">
+      Built for her • Powered by NWS
+    </footer>
   </main>
 
   <script src="assets/app.js"></script>
