@@ -1,22 +1,30 @@
-export default async (req) => {
+// netlify/functions/weather.js
+exports.handler = async (event) => {
   try {
-    const url = new URL(req.url);
-    const lat = url.searchParams.get("lat");
-    const lon = url.searchParams.get("lon");
+    const { lat, lon } = event.queryStringParameters || {};
     if (!lat || !lon) {
-      return new Response(JSON.stringify({ error: "Missing lat/lon" }), { status: 400 });
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Missing lat/lon" }),
+      };
     }
 
     const headers = {
-      "User-Agent": "coast-to-coast/1.0 (contact: YOUR_EMAIL@example.com)",
-      "Accept": "application/geo+json, application/json"
+      // Put a real email here (NWS wants a contact)
+      "User-Agent": "coast-to-coast/1.0 (contact: you@example.com)",
+      "Accept": "application/geo+json, application/json",
     };
 
-    // 1) points endpoint -> discover forecast URLs
     const pointsUrl = `https://api.weather.gov/points/${lat},${lon}`;
     const p = await fetch(pointsUrl, { headers });
+
     if (!p.ok) {
-      return new Response(JSON.stringify({ error: "points failed", status: p.status }), { status: 502 });
+      return {
+        statusCode: 502,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "points failed", status: p.status }),
+      };
     }
 
     const pj = await p.json();
@@ -25,20 +33,31 @@ export default async (req) => {
     const hourlyUrl = props.forecastHourly;
 
     if (!forecastUrl || !hourlyUrl) {
-      return new Response(JSON.stringify({ error: "Missing forecast urls" }), { status: 502 });
+      return {
+        statusCode: 502,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Missing forecast urls" }),
+      };
     }
 
-    // 2) daily + hourly fetch
     const [fd, fh] = await Promise.all([
       fetch(forecastUrl, { headers }),
-      fetch(hourlyUrl, { headers })
+      fetch(hourlyUrl, { headers }),
     ]);
 
     if (!fd.ok) {
-      return new Response(JSON.stringify({ error: "forecast failed", status: fd.status }), { status: 502 });
+      return {
+        statusCode: 502,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "forecast failed", status: fd.status }),
+      };
     }
     if (!fh.ok) {
-      return new Response(JSON.stringify({ error: "hourly failed", status: fh.status }), { status: 502 });
+      return {
+        statusCode: 502,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "hourly failed", status: fh.status }),
+      };
     }
 
     const dj = await fd.json();
@@ -48,19 +67,19 @@ export default async (req) => {
     const hourlyPeriods = hj?.properties?.periods ?? [];
     const updated = dj?.properties?.updated ?? hj?.properties?.updated ?? null;
 
-    return new Response(JSON.stringify({
-      updated,
-      dailyPeriods,
-      hourlyPeriods
-    }), {
-      status: 200,
+    return {
+      statusCode: 200,
       headers: {
         "Content-Type": "application/json",
-        // 5-min caching (good practice). Refresh will still feel "live".
-        "Cache-Control": "public, max-age=300"
-      }
-    });
+        "Cache-Control": "public, max-age=300",
+      },
+      body: JSON.stringify({ updated, dailyPeriods, hourlyPeriods }),
+    };
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: String(e) }),
+    };
   }
 };
