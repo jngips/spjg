@@ -18,45 +18,32 @@ body{
   transition: background .5s ease;
 }
 
-.noteBar{
-  margin-top: 8px;
-  display:flex;
-  gap: 8px;
-  align-items:center;
-}
 
-.noteInput{
-  flex:1;
-  border:none;
-  outline:none;
-  border-radius: 999px;
-  padding: 10px 12px;
-  font-size: 12px;
-  color: var(--text);
-  background: rgba(255,255,255,.14);
+/* ---------- Inline Love Note (Header) ---------- */
+
+.loveInline{
+  margin-top: 10px;
+  max-width: 520px;
+  background: rgba(255,255,255,.10);
   border: 1px solid rgba(255,255,255,.14);
+  border-radius: 18px;
+  padding: 10px 12px;
   backdrop-filter: blur(10px);
 }
 
-.noteInput::placeholder{
-  color: rgba(255,255,255,.70);
-}
-
-.noteBtn{
-  border:none;
-  cursor:pointer;
-  border-radius: 999px;
-  padding: 10px 14px;
-  font-weight: 800;
+.loveTitle{
+  font-weight: 700;
   font-size: 12px;
-  color: var(--text);
-  background: rgba(0,0,0,.18);
-  border: 1px solid rgba(255,255,255,.12);
-  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.75);
+  margin-bottom: 6px;
 }
 
-.noteBtn:active{
-  transform: translateY(1px);
+.loveText{
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(255,255,255,.95);
 }
 
 
