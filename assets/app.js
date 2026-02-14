@@ -17,6 +17,22 @@ updateClockLine();
 setInterval(updateClockLine, 30_000);
 
 // ---- Helpers ----
+function isValentineWindow() {
+  // Show love theme on Feb 13–15 (covers “tomorrow” and V-Day itself)
+  const now = new Date();
+  const m = now.getMonth() + 1; // 1-12
+  const d = now.getDate();
+  return (m === 2 && (d === 13 || d === 14 || d === 15));
+}
+
+function setLoveMode(on){
+  document.body.classList.toggle("wx-love", on);
+  const hearts = $("fxHearts");
+  if (hearts) hearts.style.opacity = on ? "0.65" : "0";
+}
+
+
+
 function weekdayFromISO(iso){
   const d = new Date(iso);
   return d.toLocaleDateString([], { weekday: "short" });
@@ -33,9 +49,24 @@ function conditionClass(shortForecast=""){
 }
 
 function applyWeatherTheme(shortForecast){
-  const cls = conditionClass(shortForecast);
+  // If V-Day window, force love mode and hearts (don’t overwrite with wx-rain etc)
+  if (isValentineWindow()) {
+    document.body.classList.remove("wx-clear","wx-cloudy","wx-rain","wx-snow","wx-thunder","wx-fog");
+    document.body.classList.add("wx-love");
+    setLoveMode(true);
 
-  document.body.classList.remove("wx-clear","wx-cloudy","wx-rain","wx-snow","wx-thunder","wx-fog");
+    // keep rain/snow off in love mode (clean look)
+    const rain = $("fxRain");
+    const snow = $("fxSnow");
+    if (rain) rain.style.opacity = "0";
+    if (snow) snow.style.opacity = "0";
+    return;
+  }
+
+  setLoveMode(false);
+
+  const cls = conditionClass(shortForecast);
+  document.body.classList.remove("wx-clear","wx-cloudy","wx-rain","wx-snow","wx-thunder","wx-fog","wx-love");
   document.body.classList.add(cls);
 
   const rain = $("fxRain");
@@ -53,6 +84,67 @@ function fmtUpdated(updatedIso){
     return "—";
   }
 }
+
+// --- Simple sunrise/sunset approximation (NOAA-style-ish) ---
+// Accuracy is typically within a few minutes—fine for a gift app.
+function sunriseSunset(lat, lon, date = new Date()) {
+  // returns { sunrise: Date, sunset: Date } in local browser time
+  // This uses a common approximation for solar events.
+  const rad = Math.PI / 180;
+  const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const n = Math.floor((day - new Date(day.getFullYear(), 0, 0)) / 86400000);
+
+  const lngHour = lon / 15;
+
+  function calc(t, isSunrise) {
+    const M = (0.9856 * t) - 3.289;
+    let L = M + (1.916 * Math.sin(M * rad)) + (0.020 * Math.sin(2 * M * rad)) + 282.634;
+    L = (L + 360) % 360;
+
+    let RA = Math.atan(0.91764 * Math.tan(L * rad)) / rad;
+    RA = (RA + 360) % 360;
+
+    const Lquadrant  = Math.floor(L / 90) * 90;
+    const RAquadrant = Math.floor(RA / 90) * 90;
+    RA = (RA + (Lquadrant - RAquadrant)) / 15;
+
+    const sinDec = 0.39782 * Math.sin(L * rad);
+    const cosDec = Math.cos(Math.asin(sinDec));
+
+    const cosH = (Math.cos(90.833 * rad) - (sinDec * Math.sin(lat * rad))) / (cosDec * Math.cos(lat * rad));
+    if (cosH > 1 || cosH < -1) return null; // polar day/night edge cases
+
+    let H = isSunrise ? (360 - Math.acos(cosH) / rad) : (Math.acos(cosH) / rad);
+    H = H / 15;
+
+    const T = H + RA - (0.06571 * t) - 6.622;
+    let UT = (T - lngHour) % 24;
+    if (UT < 0) UT += 24;
+
+    const hr = Math.floor(UT);
+    const min = Math.floor((UT - hr) * 60);
+    // Interpret UT as UTC time on `day`, then convert to local Date object:
+    const utc = new Date(Date.UTC(day.getFullYear(), day.getMonth(), day.getDate(), hr, min, 0));
+    return utc;
+  }
+
+  const tRise = n + ((6 - lngHour) / 24);
+  const tSet  = n + ((18 - lngHour) / 24);
+
+  const riseUTC = calc(tRise, true);
+  const setUTC  = calc(tSet, false);
+
+  return {
+    sunrise: riseUTC ? new Date(riseUTC) : null,
+    sunset:  setUTC  ? new Date(setUTC)  : null
+  };
+}
+
+function fmtTime(d, tz){
+  if(!d) return "—";
+  return d.toLocaleTimeString([], { hour:"numeric", minute:"2-digit", timeZone: tz });
+}
+
 
 // From hourly period objects
 function pickHourlyNow(hourlyPeriods){
@@ -108,7 +200,13 @@ function renderHero(city, data){
 
   // Sunset: still blank until we add a sunrise/sunset API or compute astronomy.
   // Keeping it as — is honest. We can implement next.
-  $("sunset").textContent = "—";
+    const ss = sunriseSunset(city.lat, city.lon, new Date());
+  const riseStr = fmtTime(ss.sunrise, city.tz);
+  const setStr  = fmtTime(ss.sunset, city.tz);
+
+  $("sunset").textContent = setStr;
+  // If you want to also show sunrise, swap "Humidity" label or add a new metaItem later.
+
 
   $("updatedLine").textContent = `Updated: ${fmtUpdated(data.updated)}`;
 
@@ -117,17 +215,36 @@ function renderHero(city, data){
 }
 
 function renderForecastStrip(data){
-  const periods = (data.dailyPeriods || []).slice(0, 10);
-  $("forecastStrip").innerHTML = periods.map(p => {
-    const day = weekdayFromISO(p.startTime);
-    const desc = (p.shortForecast || "").slice(0, 28);
-    const wind = p.windSpeed || "";
+  const periods = (data.dailyPeriods || []);
+
+  // NWS daily periods are often Day/Night alternating.
+  // Group into 7 days: take first Day + following Night if available.
+  const days = [];
+  for (let i = 0; i < periods.length && days.length < 7; i++){
+    const p = periods[i];
+    if (!p) continue;
+
+    // Prefer daytime entries as the "day"
+    if (p.isDaytime) {
+      const night = periods[i+1] && !periods[i+1].isDaytime ? periods[i+1] : null;
+      days.push({ day: p, night });
+    }
+  }
+
+  $("forecastStrip").innerHTML = days.map(({day, night}) => {
+    const name = weekdayFromISO(day.startTime);
+    const desc = (day.shortForecast || "").slice(0, 28);
+    const hi = day.temperature;
+    const lo = night?.temperature ?? "—";
+    const icon = day.icon ? day.icon.split("?")[0] : null;
+
     return `
       <div class="fc">
-        <div class="day">${day}</div>
-        <div class="small">${desc}</div>
-        <div class="t">${p.temperature}°</div>
-        <div class="small">${wind}</div>
+        <div class="day">${name}</div>
+        <div class="icon">${icon ? `<img src="${icon}" alt="">` : "—"}</div>
+        <div class="desc">${desc}</div>
+        <div class="hi">${hi}°</div>
+        <div class="lo">${lo !== "—" ? `${lo}°` : "—"}</div>
       </div>
     `;
   }).join("");
