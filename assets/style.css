@@ -263,6 +263,40 @@ body.wx-love{
   padding: 14px 12px;
   backdrop-filter: blur(12px);
 }
+
+.hourly{
+  margin-top: 12px;
+  border-radius: var(--r);
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  padding: 14px 12px;
+  backdrop-filter: blur(12px);
+}
+
+.hc{
+  min-width: 128px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.16);
+  padding: 12px 12px;
+  display:flex;
+  flex-direction:column;
+  gap: 8px;
+}
+
+.hc .time{ font-weight: 800; font-size: 13px; }
+.hc .t{ font-weight: 800; font-size: 26px; line-height:1; }
+.hc .small{ color: var(--muted); font-size: 12px; line-height:1.2; }
+.hc .row{ display:flex; justify-content:space-between; gap:10px; }
+
+.hourly .strip{
+  display:flex;
+  gap: 10px;
+  overflow-x:auto;
+  padding-bottom: 6px;
+}
+
+
 .secTitle{
   font-weight: 800;
   font-size: 13px;
