@@ -36,14 +36,14 @@ body{
   font-size: 12px;
   letter-spacing: .03em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.75);
+  color: rgba(74, 0, 48, 1);
   margin-bottom: 6px;
 }
 
 .loveText{
   font-size: 13px;
   line-height: 1.45;
-  color: rgba(255,255,255,.95);
+  color: rgba(122, 42, 79, 1);
 }
 
 
