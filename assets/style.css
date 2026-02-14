@@ -384,3 +384,13 @@ body.wx-love{
   .seg{ width: 320px; }
   .heroMeta{ grid-template-columns: repeat(6, 1fr); }
 }
+
+/* -------- Love Mode Text Override -------- */
+
+body.wx-love{
+  --text: #4a0030;      /* deep rose for main text */
+  --muted: #7a2a4f;     /* softer rose for secondary text */
+  --stroke: rgba(150, 40, 90, .20);
+  --glass: rgba(255,255,255,.30);
+  --glass2: rgba(255,255,255,.18);
+}
