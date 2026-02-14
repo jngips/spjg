@@ -25,6 +25,33 @@ function isValentineWindow() {
   return (m === 2 && (d === 13 || d === 14 || d === 15));
 }
 
+// ---- Note bar (saved locally) ----
+const NOTE_KEY = "c2c_note";
+
+function initNoteBar(){
+  const input = $("noteInput");
+  const btn = $("noteSave");
+  if(!input || !btn) return;
+
+  // load saved
+  const saved = localStorage.getItem(NOTE_KEY);
+  if(saved) input.value = saved;
+
+  function save(){
+    localStorage.setItem(NOTE_KEY, input.value.trim());
+    btn.textContent = "Saved ♥";
+    setTimeout(()=> btn.textContent = "Save", 1200);
+  }
+
+  btn.addEventListener("click", save);
+  input.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") save();
+  });
+}
+
+initNoteBar();
+
+
 function mphFromWindSpeed(windSpeedStr=""){
   // NWS windSpeed is often like "7 mph" or "3 to 7 mph"
   const m = windSpeedStr.match(/(\d+)(?:\s*to\s*(\d+))?\s*mph/i);
