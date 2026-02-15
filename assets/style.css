@@ -21,30 +21,46 @@ body{
 
 /* ---------- Inline Love Note (Header) ---------- */
 
-.loveInline{
+/* -------- Emerald & Gold Theme -------- */
+/* ---------- Emerald & Gold Note Styling ---------- */
+
+body.wx-emerald .loveInline{
   margin-top: 10px;
-  max-width: 520px;
-  background: rgba(255,255,255,.10);
-  border: 1px solid rgba(255,255,255,.14);
+  max-width: 560px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(18, 63, 47, .75),
+    rgba(10, 40, 30, .65)
+  );
+
+  border: 1px solid rgba(201, 162, 39, .45);
   border-radius: 18px;
-  padding: 10px 12px;
-  backdrop-filter: blur(10px);
+  padding: 14px 16px;
+
+  backdrop-filter: blur(14px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.45);
 }
 
-.loveTitle{
-  font-weight: 700;
+body.wx-emerald .loveTitle{
+  font-weight: 800;
   font-size: 12px;
-  letter-spacing: .03em;
+  letter-spacing: .06em;
   text-transform: uppercase;
-  color: rgba(74, 0, 48, 1);
-  margin-bottom: 6px;
+
+  color: rgba(201, 162, 39, 1); /* gold */
+  margin-bottom: 8px;
 }
 
-.loveText{
-  font-size: 13px;
-  line-height: 1.45;
-  color: rgba(122, 42, 79, 1);
+body.wx-emerald .loveText{
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: 500;
+
+  color: rgba(245, 230, 179, 1); /* warm champagne */
 }
+
+
 
 
 /* Condition-based backgrounds */

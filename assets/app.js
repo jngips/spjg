@@ -450,3 +450,11 @@ document.querySelectorAll(".segBtn").forEach(btn=>{
 // Boot: always HER
 setCity("HER");
 Promise.all([loadCity(HER), loadCity(ME)]).catch(console.error);
+
+// Force Emerald theme
+document.body.classList.remove(
+  "wx-clear","wx-cloudy","wx-rain",
+  "wx-snow","wx-thunder","wx-fog","wx-love"
+);
+document.body.classList.add("wx-emerald");
+
