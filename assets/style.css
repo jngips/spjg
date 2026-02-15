@@ -22,6 +22,33 @@ body{
 /* ---------- Inline Love Note (Header) ---------- */
 
 /* -------- Emerald & Gold Theme -------- */
+body.wx-emerald{
+  background:
+    radial-gradient(1200px 800px at 20% 10%, rgba(16, 94, 64, .55), transparent 60%),
+    radial-gradient(1000px 700px at 80% 20%, rgba(201, 162, 39, .35), transparent 65%),
+    linear-gradient(180deg, #0e2f24, #071914);
+
+  --text: rgba(245, 230, 179, 1);      /* champagne */
+  --muted: rgba(201, 162, 39, .85);    /* gold */
+  --stroke: rgba(201, 162, 39, .25);
+
+  --glass: rgba(18, 63, 47, .65);
+  --glass2: rgba(18, 63, 47, .45);
+}
+
+body.wx-emerald .hero,
+body.wx-emerald .compare,
+body.wx-emerald .forecast,
+body.wx-emerald .hourly{
+  background: linear-gradient(
+    180deg,
+    rgba(20, 80, 60, .75),
+    rgba(10, 40, 30, .65)
+  );
+  border: 1px solid rgba(201, 162, 39, .35);
+  box-shadow: 0 26px 90px rgba(0,0,0,.55);
+}
+
 /* ---------- Emerald & Gold Note Styling ---------- */
 
 body.wx-emerald .loveInline{
