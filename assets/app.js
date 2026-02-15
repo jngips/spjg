@@ -121,31 +121,22 @@ function conditionClass(shortForecast=""){
 }
 
 function applyWeatherTheme(shortForecast){
-  // If V-Day window, force love mode and hearts (don’t overwrite with wx-rain etc)
-  if (isValentineWindow()) {
-    document.body.classList.remove("wx-clear","wx-cloudy","wx-rain","wx-snow","wx-thunder","wx-fog");
-    document.body.classList.add("wx-love");
-    setLoveMode(true);
-
-    // keep rain/snow off in love mode (clean look)
-    const rain = $("fxRain");
-    const snow = $("fxSnow");
-    if (rain) rain.style.opacity = "0";
-    if (snow) snow.style.opacity = "0";
-    return;
-  }
-
-  setLoveMode(false);
+  // Emerald theme is forced elsewhere.
+  // This function only controls weather overlays (rain/snow).
 
   const cls = conditionClass(shortForecast);
-  document.body.classList.remove("wx-clear","wx-cloudy","wx-rain","wx-snow","wx-thunder","wx-fog","wx-love");
-  document.body.classList.add(cls);
 
   const rain = $("fxRain");
   const snow = $("fxSnow");
+  const hearts = $("fxHearts");
+
+  // Hearts OFF (no Valentine)
+  if (hearts) hearts.style.opacity = "0";
+
   if (rain) rain.style.opacity = (cls === "wx-rain" || cls === "wx-thunder") ? "0.55" : "0";
   if (snow) snow.style.opacity = (cls === "wx-snow") ? "0.60" : "0";
 }
+
 
 function fmtUpdated(updatedIso){
   if(!updatedIso) return "—";
@@ -451,10 +442,15 @@ document.querySelectorAll(".segBtn").forEach(btn=>{
 setCity("HER");
 Promise.all([loadCity(HER), loadCity(ME)]).catch(console.error);
 
-// Force Emerald theme
+// Force Emerald theme always
 document.body.classList.remove(
   "wx-clear","wx-cloudy","wx-rain",
-  "wx-snow","wx-thunder","wx-fog","wx-love"
+  "wx-snow","wx-thunder","wx-fog","wx-love","wx-emerald"
 );
 document.body.classList.add("wx-emerald");
+
+// Ensure hearts are off in emerald mode
+const hearts = $("fxHearts");
+if (hearts) hearts.style.opacity = "0";
+
 
